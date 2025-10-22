@@ -1,15 +1,44 @@
 package com.example.wireless
 
+import android.Manifest
+import android.app.AlertDialog
+import android.bluetooth.BluetoothAdapter
 import android.os.Bundle
+import android.util.Log
+import android.widget.Button
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.RequiresPermission
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 
 class DetalleActivity : AppCompatActivity() {
 
     private lateinit var txtDetalle: TextView
+    private lateinit var btnSolicitarPermiso: Button
+
+    fun solicitarPermiso() {
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_WIFI_STATE,
+                Manifest.permission.BLUETOOTH_CONNECT
+            ),
+            1
+        )
+    }
+
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+    fun obtenerBluetooth(){
+        val bluetoothAdapter: BluetoothAdapter? = BluetoothAdapter.getDefaultAdapter()
+        val dispositivosVinculados = bluetoothAdapter?.bondedDevices
+        dispositivosVinculados?.forEach { dispositivo ->
+            Log.d("Bluetooth", "Nombre: ${dispositivo.name}, Dirección: ${dispositivo.address}")
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -22,9 +51,22 @@ class DetalleActivity : AppCompatActivity() {
         }
 
         txtDetalle = findViewById(R.id.txtDetalle)
+        btnSolicitarPermiso = findViewById(R.id.btnSolicitarPermiso)
 
         val recibido = intent.getStringExtra("EXTRA_TEXTO").orEmpty()
         txtDetalle.text = recibido
 
+        btnSolicitarPermiso.setOnClickListener {
+            AlertDialog.Builder(this)
+                .setTitle("¿Por qué pedimos este permiso?")
+                .setMessage("Necesitamos acceso a ubicación para escanear dispositivos cercanos vía Bluetooth.")
+                .setPositiveButton("Continuar") { _, _ ->
+                    solicitarPermiso()
+                }
+                .setNegativeButton("Cancelar", null)
+                .show()
+        }
+
     }
+
 }
